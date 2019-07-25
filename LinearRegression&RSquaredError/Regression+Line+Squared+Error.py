@@ -8,17 +8,25 @@
 from statistics import mean
 import numpy as np
 import matplotlib.pyplot as plt
+import random
 
-xs = np.array([1,2,3,4,5,6,7], dtype=np.float64)
-ys = np.array([9,7,4,1,-5,-6,-7], dtype=np.float64)
-
-print("list of xs: {}".format(xs))
-print("list of ys: {}".format(ys))
-
-plt.scatter(xs, ys)
-plt.show()
+xs = np.array([1, 2, 3, 4, 5, 6], dtype=np.float64)
+ys = np.array([5, 4, 6, 5, 6, 7], dtype=np.float64)
 
 
+def create_dataset(datasetsize, variance, step=2, correlation=False):
+    val = 1
+    ys = []
+    for i in range(datasetsize):
+        y = val + random.randrange(-variance, variance)
+        ys.append(y)
+        if correlation and correlation == 'pos':
+            val += step
+        elif correlation and correlation == 'neg':
+            val -= step
+    xs = [i for i in range(datasetsize)]
+
+    return np.array(xs, dtype=np.float64), np.array(ys, dtype=np.float64)
 
 def best_fit_slope_and_intercept(xs, ys): 
     m =  ( ((mean(xs) * mean(ys)) - mean(xs*ys)) /
@@ -27,17 +35,33 @@ def best_fit_slope_and_intercept(xs, ys):
     b = mean(ys) - m*mean(xs)
     return m, b
 
+def squared_error(ys_orig, ys_line):
+    return sum((ys_line - ys_orig)**2)
+
+def coefficient_of_determination(ys_orig, ys_line):
+    y_mean_line = [mean(ys_orig) for y in ys_orig]
+    squared_error_reg = squared_error(ys_orig, ys_line)
+    squared_error_y_mean = squared_error(ys_orig, y_mean_line)
+    print("regression line error: {r}\nmean line error: {m}".format(r=squared_error_reg, m=squared_error_y_mean))
+    return 1 - (squared_error_reg / squared_error_y_mean)
+
+
+
+xs, ys = create_dataset(40, 15, 2, correlation='pos')
+plt.scatter(xs, ys)
+plt.show()
+
+
 m, b = best_fit_slope_and_intercept(xs, ys)
-
-print("Calculated values of m & b are : m={}, b={}".format(m, b))
-
-
 regression_line = np.array([m*x + b for x in xs])
 
+print("m={} b={}".format(m, b))
+
+
+print("Predicting value of Y for x=8")
 predict_x = 8
-print("Predicting value of y for x=8")
 predict_y = (m*predict_x + b)
-print("Value of y={}".format(predict_y))
+print("Predicted value of Y={}".format(predict_y))
 plt.scatter(xs, ys)
 plt.plot(xs, regression_line)
 plt.scatter(predict_x, predict_y, color='green')
@@ -45,14 +69,6 @@ plt.show()
 
 
 
-def squared_error(ys_orig, y_line):
-    return sum((y_line - ys_orig)**2)
-
-def coefficient_of_determination(ys_orig, y_line):
-    y_mean_line = [mean(ys_orig) for y in ys_orig]
-    squared_error_reg = squared_error(ys_orig, y_line)
-    squared_error_y_mean = squared_error(y_mean_line, y_line)
-    return 1 - (squared_error_reg / squared_error_y_mean)
-
 r_squared = coefficient_of_determination(ys, regression_line)
-print("R squared error/Coefficient of determination is: {}".format(r_squared))
+print("R squared error: {}".format(r_squared))
+
